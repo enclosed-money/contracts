@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 
-import "solmate/tokens/ERC1155.sol";
-import "solmate/tokens/ERC20.sol";
+import "openzeppelin-contracts/contracts/token/ERC1155/ERC1155.sol";
+import "openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
 
 contract NFTBill is ERC1155 {
+    constructor() ERC1155("") {}
+
     function deposit() external payable {
         require(msg.value > 0, "Send at least 1 wei");
         require(msg.value <= type(uint96).max, "Too much ETH");

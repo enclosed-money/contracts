@@ -3,10 +3,10 @@ pragma solidity ^0.8.13;
 
 import "src/NFTBill.sol";
 import "forge-std/Test.sol";
-import "solmate/tokens/ERC20.sol";
+import "openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
 
 contract ShibaCoin is ERC20 {
-    constructor() ERC20("Shiba Inu", "SHIB", 18) {
+    constructor() ERC20("Shiba Inu", "SHIB") {
         _mint(0x1E79b045Dc29eAe9fdc69673c9DCd7C53E5E159D, 10 ether);
     }
 }
