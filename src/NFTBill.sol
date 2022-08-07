@@ -5,23 +5,23 @@ import "solmate/tokens/ERC1155.sol";
 import "solmate/tokens/ERC20.sol";
 
 contract NFTBill is ERC1155 {
-    function deposit(address erc20, uint96 value) external payable {
-        if (erc20 == address(0)) {
-            require(value == 0, "Send value in ETH");
-            require(msg.value > 0, "Send at least 1 wei");
+    function deposit() external payable {
+        require(msg.value > 0, "Send at least 1 wei");
+        require(msg.value <= type(uint96).max, "Too much ETH");
 
-            uint256 id = msg.value;
-            _mint(msg.sender, id, 1, "");
-        } else {
-            require(msg.value == 0, "Do not send ETH");
-            require(value > 0, "Send at least some coins");
+        uint256 id = msg.value;
+        _mint(msg.sender, id, 1, "");
+    }
 
-            // The caller is expected to have `approve()`d this contract
-            // for the amount being deposited
-            ERC20(erc20).transferFrom(msg.sender, address(this), value);
-            uint256 id = (uint256(uint160(erc20)) << 96) | value;
-            _mint(msg.sender, id, 1, "");
-        }
+    function deposit(address erc20, uint96 value) external {
+        require(value > 0, "Send at least some coins");
+
+        // The caller is expected to have `approve()`d this contract
+        // for the amount being deposited
+        ERC20(erc20).transferFrom(msg.sender, address(this), value);
+        // TODO: What if we get less tokens than we asked for?
+        uint256 id = (uint256(uint160(erc20)) << 96) | value;
+        _mint(msg.sender, id, 1, "");
     }
 
     function withdraw(uint256 id) external {

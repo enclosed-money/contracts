@@ -25,7 +25,7 @@ contract NFTBillTest is Test {
 
     function testDepositEther() public {
         vm.prank(w1nt3r);
-        bill.deposit{value: 1 ether}(address(0), 0);
+        bill.deposit{value: 1 ether}();
 
         uint256 id = uint256(1 ether);
         assertEq(bill.balanceOf(w1nt3r, id), 1);
