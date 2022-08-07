@@ -2,8 +2,11 @@
 pragma solidity ^0.8.13;
 
 import "src/NFTBill.sol";
+import "src/Metadata.sol";
+import "src/OffchainMetadata.sol";
 import "forge-std/Test.sol";
 import "openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
+import "openzeppelin-contracts/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 
 contract ShibaCoin is ERC20 {
     constructor() ERC20("Shiba Inu", "SHIB") {
@@ -19,7 +22,14 @@ contract NFTBillTest is Test {
 
     function setUp() public {
         vm.deal(w1nt3r, 10 ether);
-        bill = new NFTBill();
+        OffchainMetadata meta = new OffchainMetadata();
+        TransparentUpgradeableProxy proxy = new TransparentUpgradeableProxy(
+            address(meta),
+            address(this),
+            ""
+        );
+
+        bill = new NFTBill(MetadataURI(address(proxy)));
         coin = new ShibaCoin();
     }
 
@@ -56,5 +66,9 @@ contract NFTBillTest is Test {
         vm.prank(vitalik);
         bill.withdraw(id);
         assertEq(coin.balanceOf(vitalik), 1 ether);
+    }
+
+    function testUri() public {
+        assertEq(bill.uri(1), "");
     }
 }

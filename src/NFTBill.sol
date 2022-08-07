@@ -1,11 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 
+import "./Metadata.sol";
 import "openzeppelin-contracts/contracts/token/ERC1155/ERC1155.sol";
 import "openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
 
 contract NFTBill is ERC1155 {
-    constructor() ERC1155("") {}
+    MetadataURI public metadata;
+
+    constructor(MetadataURI _metadata) ERC1155("") {
+        metadata = _metadata;
+    }
 
     function deposit() external payable {
         require(msg.value > 0, "Send at least 1 wei");
@@ -39,7 +44,7 @@ contract NFTBill is ERC1155 {
         }
     }
 
-    function uri(uint256) public pure override returns (string memory) {
-        return ""; // TODO on-chain renderer
+    function uri(uint256 id) public view override returns (string memory) {
+        return metadata.uri(id);
     }
 }
