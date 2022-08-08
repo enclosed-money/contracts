@@ -6,3 +6,4 @@ out/
 !/broadcast
 /broadcast/*
 /broadcast/*/31337/
+node_modules
