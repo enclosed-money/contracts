@@ -16,7 +16,7 @@ contract OnchainMetadataTest is Test {
 
         string[] memory inputs = new string[](3);
         inputs[0] = 'node';
-        inputs[1] = 'test/extract.js';
+        inputs[1] = 'test/utils/extract.js';
         inputs[2] = uri;
 
         vm.ffi(inputs);

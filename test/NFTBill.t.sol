@@ -2,7 +2,7 @@
 pragma solidity ^0.8.13;
 
 import 'src/NFTBill.sol';
-import 'src/Metadata.sol';
+import 'src/interfaces/IMetadata.sol';
 import 'src/OffchainMetadata.sol';
 import 'forge-std/Test.sol';
 import 'openzeppelin-contracts/contracts/token/ERC20/ERC20.sol';
@@ -29,7 +29,7 @@ contract NFTBillTest is Test {
             ''
         );
 
-        bill = new NFTBill(MetadataURI(address(proxy)));
+        bill = new NFTBill(IMetadata(address(proxy)));
         coin = new ShibaCoin();
     }
 
