@@ -27,7 +27,11 @@ contract NFTBill is ERC1155 {
         // for the amount being deposited
         ERC20(erc20).transferFrom(msg.sender, address(this), value);
         // TODO: What if we get less tokens than we asked for?
-        uint256 id = (uint256(uint160(erc20)) << 96) | value;
+        uint256 id;
+        assembly {
+            id := or(value, shl(96, erc20))
+        }
+
         _mint(msg.sender, id, 1, '');
     }
 
