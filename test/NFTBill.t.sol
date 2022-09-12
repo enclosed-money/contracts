@@ -48,6 +48,26 @@ contract NFTBillTest is Test {
         assertEq(vitalik.balance, 1 ether);
     }
 
+    function testDepositEther(address user, uint256 amount) public {
+        vm.assume(amount > 0);
+        vm.assume(amount <= type(uint96).max);
+        vm.assume(user != address(0));
+
+        vm.prank(user);
+        vm.deal(user, amount);
+        bill.deposit{value: amount}();
+
+        uint256 id = uint256(amount);
+        assertEq(bill.balanceOf(user, id), 1);
+
+        vm.prank(user);
+        bill.safeTransferFrom(user, vitalik, id, 1, '');
+
+        vm.prank(vitalik);
+        bill.withdraw(id);
+        assertEq(vitalik.balance, amount);
+    }
+
     function testDepositCoin() public {
         vm.prank(w1nt3r);
         coin.approve(address(bill), 1 ether);
