@@ -85,11 +85,11 @@ library DecimalStrings {
     {
         bytes memory buffer = new bytes(params.bufferLength);
         if (params.isPercent) {
-            buffer[buffer.length - 1] = "%";
+            buffer[buffer.length - 1] = '%';
         }
         if (params.isLessThanOne) {
-            buffer[0] = "0";
-            buffer[1] = ".";
+            buffer[0] = '0';
+            buffer[1] = '.';
         }
 
         // add leading/trailing 0's
@@ -106,7 +106,7 @@ library DecimalStrings {
                 params.decimalIndex > 0 &&
                 params.sigfigIndex == params.decimalIndex
             ) {
-                buffer[--params.sigfigIndex] = ".";
+                buffer[--params.sigfigIndex] = '.';
             }
             buffer[--params.sigfigIndex] = bytes1(
                 uint8(uint256(48) + (params.sigfigs % 10))

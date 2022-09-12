@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
-import "src/NFTBill.sol";
-import "src/Metadata.sol";
-import "src/OffchainMetadata.sol";
-import "forge-std/Test.sol";
-import "openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
-import "openzeppelin-contracts/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
+import 'src/NFTBill.sol';
+import 'src/Metadata.sol';
+import 'src/OffchainMetadata.sol';
+import 'forge-std/Test.sol';
+import 'openzeppelin-contracts/contracts/token/ERC20/ERC20.sol';
+import 'openzeppelin-contracts/contracts/proxy/transparent/TransparentUpgradeableProxy.sol';
 
 contract ShibaCoin is ERC20 {
-    constructor() ERC20("Shiba Inu", "SHIB") {
+    constructor() ERC20('Shiba Inu', 'SHIB') {
         _mint(0x1E79b045Dc29eAe9fdc69673c9DCd7C53E5E159D, 10 ether);
     }
 }
@@ -26,7 +26,7 @@ contract NFTBillTest is Test {
         TransparentUpgradeableProxy proxy = new TransparentUpgradeableProxy(
             address(meta),
             address(this),
-            ""
+            ''
         );
 
         bill = new NFTBill(MetadataURI(address(proxy)));
@@ -41,7 +41,7 @@ contract NFTBillTest is Test {
         assertEq(bill.balanceOf(w1nt3r, id), 1);
 
         vm.prank(w1nt3r);
-        bill.safeTransferFrom(w1nt3r, vitalik, id, 1, "");
+        bill.safeTransferFrom(w1nt3r, vitalik, id, 1, '');
 
         vm.prank(vitalik);
         bill.withdraw(id);
@@ -61,7 +61,7 @@ contract NFTBillTest is Test {
         assertEq(bill.balanceOf(w1nt3r, id), 1);
 
         vm.prank(w1nt3r);
-        bill.safeTransferFrom(w1nt3r, vitalik, id, 1, "");
+        bill.safeTransferFrom(w1nt3r, vitalik, id, 1, '');
 
         vm.prank(vitalik);
         bill.withdraw(id);
@@ -69,6 +69,6 @@ contract NFTBillTest is Test {
     }
 
     function testUri() public {
-        assertEq(bill.uri(1), "");
+        assertEq(bill.uri(1), '');
     }
 }

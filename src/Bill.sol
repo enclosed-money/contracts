@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 
-import "./DecimalStrings.sol";
+import './DecimalStrings.sol';
 
 contract Bill {
     function render(
@@ -16,17 +16,17 @@ contract Bill {
                 '<svg xmlns="http://www.w3.org/2000/svg" width="350" height="350" style="background:#000;font-family:Courier New">',
                 '<text x="50%" y="50%" text-anchor="middle" fill="#fff" font-size="80" font-weight="bold">',
                 DecimalStrings.decimalString(uint256(value), decimals, false),
-                "</text>",
+                '</text>',
                 '<text x="50%" y="64%" text-anchor="middle" fill="#fff" font-size="40">',
                 symbol,
-                "</text>",
+                '</text>',
                 '<text x="20" y="310" fill="#999" font-size="16">',
                 name,
-                "</text>",
+                '</text>',
                 '<text x="20" y="330" fill="#999" font-size="12">0x',
                 addressToAsciiString(erc20),
-                "</text>",
-                "</svg>"
+                '</text>',
+                '</svg>'
             );
     }
 
