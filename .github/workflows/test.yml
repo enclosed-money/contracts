@@ -35,5 +35,5 @@ jobs:
 
       - name: Run Forge snapshots
         run: |
-          forge snapshot --check
+          forge snapshot --check --ffi
         id: snapshot
