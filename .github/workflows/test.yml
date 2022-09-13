@@ -32,3 +32,8 @@ jobs:
         run: |
           forge test -vvv
         id: test
+
+      - name: Run Forge snapshots
+        run: |
+          forge snapshot --check
+        id: snapshot
