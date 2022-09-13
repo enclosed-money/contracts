@@ -1,0 +1,4 @@
+NFTBillTest:testDepositCoin() (gas: 130280)
+NFTBillTest:testDepositEther() (gas: 87134)
+NFTBillTest:testUri() (gas: 19769)
+OnchainMetadataTest:testRender() (gas: 11084)
