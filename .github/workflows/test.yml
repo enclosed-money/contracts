@@ -1,6 +1,8 @@
 name: test
 
-on: [push]
+on: 
+  pull_request:
+    branches: [ main ]
 
 env:
   FOUNDRY_PROFILE: ci
