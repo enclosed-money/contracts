@@ -13,11 +13,11 @@ contract NFTBill is ERC1155 {
     }
 
     function deposit() external payable {
-        uint256 msgValue = msg.value;
-        require(msgValue > 0, 'Send at least 1 wei');
-        require(msgValue <= type(uint96).max, 'Too much ETH');
+        uint256 value = msg.value;
+        require(value > 0, 'Send at least 1 wei');
+        require(value <= type(uint96).max, 'Too much ETH');
 
-        _mint(msg.sender, msgValue, 1, '');
+        _mint(msg.sender, value, 1, '');
     }
 
     function deposit(address erc20, uint96 value) external {
