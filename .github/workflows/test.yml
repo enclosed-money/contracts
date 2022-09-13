@@ -30,7 +30,7 @@ jobs:
 
       - name: Run Forge tests
         run: |
-          forge test -vvv
+          forge test --ffi -vvv
         id: test
 
       - name: Run Forge snapshots
