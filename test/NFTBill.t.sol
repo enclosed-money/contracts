@@ -48,6 +48,26 @@ contract NFTBillTest is Test {
         assertEq(vitalik.balance, 1 ether);
     }
 
+    function testDepositEther(address user, uint256 amount) public {
+        vm.assume(amount > 0);
+        vm.assume(amount <= type(uint96).max);
+        vm.assume(user != address(0));
+
+        vm.prank(user);
+        vm.deal(user, amount);
+        bill.deposit{value: amount}();
+
+        uint256 id = uint256(amount);
+        assertEq(bill.balanceOf(user, id), 1);
+
+        vm.prank(user);
+        bill.safeTransferFrom(user, vitalik, id, 1, '');
+
+        vm.prank(vitalik);
+        bill.withdraw(id);
+        assertEq(vitalik.balance, amount);
+    }
+
     function testDepositCoin() public {
         vm.prank(w1nt3r);
         coin.approve(address(bill), 1 ether);
@@ -66,6 +86,31 @@ contract NFTBillTest is Test {
         vm.prank(vitalik);
         bill.withdraw(id);
         assertEq(coin.balanceOf(vitalik), 1 ether);
+    }
+
+    function testDepositCoin(address user, uint256 amount) public {
+        vm.assume(amount > 0);
+        vm.assume(amount < 10 ether);
+        vm.assume(user != address(0));
+
+        vm.prank(user);
+        coin.approve(address(bill), amount);
+
+        deal(address(coin), user, 10 ether);
+        vm.prank(user);
+        bill.deposit(address(coin), uint96(amount));
+        assertEq(coin.balanceOf(user), 10 ether - amount);
+        assertEq(coin.balanceOf(address(bill)), amount);
+
+        uint256 id = (uint256(uint160(address(coin))) << 96) | uint256(amount);
+        assertEq(bill.balanceOf(user, id), 1);
+
+        vm.prank(user);
+        bill.safeTransferFrom(user, vitalik, id, 1, '');
+
+        vm.prank(vitalik);
+        bill.withdraw(id);
+        assertEq(coin.balanceOf(vitalik), amount);
     }
 
     function testUri() public {
