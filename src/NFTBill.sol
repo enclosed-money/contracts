@@ -1,14 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 
-import './Metadata.sol';
 import 'openzeppelin-contracts/contracts/token/ERC1155/ERC1155.sol';
 import 'openzeppelin-contracts/contracts/token/ERC20/ERC20.sol';
 
-contract NFTBill is ERC1155 {
-    MetadataURI public metadata;
+import {IMetadata} from './interfaces/IMetadata.sol';
 
-    constructor(MetadataURI _metadata) ERC1155('') {
+contract NFTBill is ERC1155 {
+    IMetadata public metadata;
+
+    constructor(IMetadata _metadata) ERC1155('') {
         metadata = _metadata;
     }
 
