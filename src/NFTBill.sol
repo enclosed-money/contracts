@@ -14,11 +14,11 @@ contract NFTBill is ERC1155 {
     }
 
     function deposit() external payable {
-        require(msg.value > 0, 'Send at least 1 wei');
-        require(msg.value <= type(uint96).max, 'Too much ETH');
+        uint256 value = msg.value;
+        require(value > 0, 'Send at least 1 wei');
+        require(value <= type(uint96).max, 'Too much ETH');
 
-        uint256 id = msg.value;
-        _mint(msg.sender, id, 1, '');
+        _mint(msg.sender, value, 1, '');
     }
 
     function deposit(address erc20, uint96 value) external {
@@ -28,7 +28,11 @@ contract NFTBill is ERC1155 {
         // for the amount being deposited
         ERC20(erc20).transferFrom(msg.sender, address(this), value);
         // TODO: What if we get less tokens than we asked for?
-        uint256 id = (uint256(uint160(erc20)) << 96) | value;
+        uint256 id;
+        assembly {
+            id := or(value, shl(96, erc20))
+        }
+
         _mint(msg.sender, id, 1, '');
     }
 
