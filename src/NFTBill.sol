@@ -3,11 +3,8 @@ pragma solidity ^0.8.13;
 
 import 'openzeppelin-contracts/contracts/token/ERC1155/ERC1155.sol';
 import 'openzeppelin-contracts/contracts/token/ERC20/ERC20.sol';
-
 import {IMetadata} from './interfaces/IMetadata.sol';
-
-error ValueTooSmall();
-error ValueTooLarge();
+import './utils/Errors.sol';
 
 contract NFTBill is ERC1155 {
     IMetadata public metadata;
@@ -18,14 +15,14 @@ contract NFTBill is ERC1155 {
 
     function deposit() external payable {
         uint256 value = msg.value;
-        if (value <= 0) revert ValueTooSmall();
-        if (value >= type(uint96).max) revert ValueTooLarge();
+        if (value <= 0) revert Errors.ValueTooSmall();
+        if (value >= type(uint96).max) revert Errors.ValueTooLarge();
 
         _mint(msg.sender, value, 1, '');
     }
 
     function deposit(address erc20, uint96 value) external {
-        if (value <= 0) revert ValueTooSmall();
+        if (value <= 0) revert Errors.ValueTooSmall();
 
         // The caller is expected to have `approve()`d this contract
         // for the amount being deposited
