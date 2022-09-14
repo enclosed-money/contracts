@@ -17,6 +17,7 @@ contract Registry {
         string name;
         string symbol;
         uint8 UID;
+        uint8 decimals;
     }
     
     /// Registry mapping ERC20 token address to its metadata
