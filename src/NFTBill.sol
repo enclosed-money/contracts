@@ -3,6 +3,7 @@ pragma solidity ^0.8.13;
 
 import 'openzeppelin-contracts/contracts/token/ERC1155/ERC1155.sol';
 import 'openzeppelin-contracts/contracts/token/ERC20/ERC20.sol';
+import 'openzeppelin-contracts/contracts/token/ERC20/extensions/draft-IERC20Permit.sol';
 
 import {IMetadata} from './interfaces/IMetadata.sol';
 
@@ -29,6 +30,35 @@ contract NFTBill is ERC1155 {
 
         // The caller is expected to have `approve()`d this contract
         // for the amount being deposited
+        ERC20(erc20).transferFrom(msg.sender, address(this), value);
+        // TODO: What if we get less tokens than we asked for?
+        uint256 id;
+        assembly {
+            id := or(value, shl(96, erc20))
+        }
+
+        _mint(msg.sender, id, 1, '');
+    }
+
+    function depositWithPermit(
+        address erc20,
+        uint96 value,
+        uint256 deadline,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) external {
+        if (value <= 0) revert ValueTooSmall();
+
+        IERC20Permit(erc20).permit(
+            msg.sender,
+            address(this),
+            value,
+            deadline,
+            v,
+            r,
+            s
+        );
         ERC20(erc20).transferFrom(msg.sender, address(this), value);
         // TODO: What if we get less tokens than we asked for?
         uint256 id;
