@@ -6,6 +6,9 @@ import 'openzeppelin-contracts/contracts/token/ERC20/ERC20.sol';
 
 import {IMetadata} from './interfaces/IMetadata.sol';
 
+error ValueTooSmall();
+error ValueTooLarge();
+
 contract NFTBill is ERC1155 {
     IMetadata public metadata;
 
@@ -15,14 +18,14 @@ contract NFTBill is ERC1155 {
 
     function deposit() external payable {
         uint256 value = msg.value;
-        require(value > 0, 'Send at least 1 wei');
-        require(value <= type(uint96).max, 'Too much ETH');
+        if (value <= 0) revert ValueTooSmall();
+        if (value >= type(uint96).max) revert ValueTooLarge();
 
         _mint(msg.sender, value, 1, '');
     }
 
     function deposit(address erc20, uint96 value) external {
-        require(value > 0, 'Send at least some coins');
+        if (value <= 0) revert ValueTooSmall();
 
         // The caller is expected to have `approve()`d this contract
         // for the amount being deposited
