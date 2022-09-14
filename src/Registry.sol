@@ -1,54 +1,49 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 
-error AlreadyAdded();
+import "openzeppelin-contracts/contracts/access/Ownable.sol";
 
-/// @title  Registry contract :: Adding popular token's data :: DAO Owned 
-/// @notice This contract can be called by our main contract for fetching tokenData
+/// @title  Registry contract :: Checking if a token's legit
+/// @notice This contract can be called by our main contract for checking if the ERC20 token address is legit
 
-contract Registry {
+contract Registry is Ownable {
+    mapping(address => bool) isLegit;
 
-    ///  Address of the DAO
-    address immutable owner_DAO;
+    event TokenSetTo(address indexed, bool value);
 
-    /// This struct contains necessary info about an ERC20 token
-    /// What more params could be added?
-    struct Token{
-        string name;
-        string symbol;
-        uint8 UID;
-        uint8 decimals;
-    }
-    
-    /// Registry mapping ERC20 token address to its metadata
-    mapping(address=>Token) tokenData;
-    mapping(address=>bool)  isLegit;
+    /// @notice To be called by the DAO, this switches ERC20 address in the isLegit mapping
+    /// @param tokenAddress ERC20 token address
+    /// @param _bool The value we want to switch to
 
-    /// All functions to be called only by the DAO
-    modifier isOwner() {
-        require(msg.sender==owner_DAO);
-        _;
-    }
-  
-    /// msg.sender should be a DAO controlled address
-    constructor(){
-        owner_DAO = msg.sender;  
-    }
-    
-
-    ///  DAO can update the token registry by adding new Token Details
-    ///  Reverts if token already exists
-    ///  @param  tokenAddress Address of the ERC20 token to be added
-    ///  @param  tokenParams Token details in the struct format defined above
-    ///  Returns true if successfully added
-
-    function addData( address tokenAddress, Token memory tokenParams) isOwner external returns(bool){
-        if( isLegit[tokenAddress] == true ){
-            revert AlreadyAdded();
+    function setIsLegit(address tokenAddress, bool _bool) public onlyOwner {
+        if (_bool == true) {
+            isLegit[tokenAddress] = true;
+            emit TokenSetTo(tokenAddress, true);
+        } else {
+            delete isLegit[tokenAddress];
+            emit TokenSetTo(tokenAddress, false);
         }
-        tokenData[tokenAddress] = tokenParams;
-        isLegit[tokenAddress] = true;
-        return true;
     }
+
+    /// @notice Struct for calling setIsLegit in a batched format
+    /// @param n Length of the Array
+    /// @param addressesList List of ERC20token addresses
+    /// @param valuesList Their respective value we want to switch to
+    struct BatchedData {
+        uint8 n;
+        address[] addressesList;
+        bool[] valueList;
+    }
+
+    /// @notice Helps in switching ERC20 Token value in batches
+    /// @param _BatchedData See above struct
     
+    function setIsLegitBatched(BatchedData memory _BatchedData)
+        public
+        onlyOwner
+    {
+        for (uint256 i = 0; i < _BatchedData.n; i++) {
+            setIsLegit(_BatchedData.addressesList[i], _BatchedData.valueList[i]);
+        }
+    }
 }
