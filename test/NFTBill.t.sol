@@ -48,20 +48,18 @@ contract NFTBillTest is Test {
         assertEq(vitalik.balance, 1 ether);
     }
 
-    function testDepositEther(address user, uint256 amount) public {
+    function testDepositEther(uint256 amount) public {
         vm.assume(amount > 0);
-        vm.assume(amount <= type(uint96).max);
-        vm.assume(user != address(0));
+        vm.assume(amount <= 10 ether);
 
-        vm.prank(user);
-        vm.deal(user, amount);
+        vm.prank(w1nt3r);
         bill.deposit{value: amount}();
 
         uint256 id = uint256(amount);
-        assertEq(bill.balanceOf(user, id), 1);
+        assertEq(bill.balanceOf(w1nt3r, id), 1);
 
-        vm.prank(user);
-        bill.safeTransferFrom(user, vitalik, id, 1, '');
+        vm.prank(w1nt3r);
+        bill.safeTransferFrom(w1nt3r, vitalik, id, 1, '');
 
         vm.prank(vitalik);
         bill.withdraw(id);
@@ -88,25 +86,23 @@ contract NFTBillTest is Test {
         assertEq(coin.balanceOf(vitalik), 1 ether);
     }
 
-    function testDepositCoin(address user, uint256 amount) public {
+    function testDepositCoin(uint256 amount) public {
         vm.assume(amount > 0);
         vm.assume(amount < 10 ether);
-        vm.assume(user != address(0));
 
-        vm.prank(user);
+        vm.prank(w1nt3r);
         coin.approve(address(bill), amount);
 
-        deal(address(coin), user, 10 ether);
-        vm.prank(user);
+        vm.prank(w1nt3r);
         bill.deposit(address(coin), uint96(amount));
-        assertEq(coin.balanceOf(user), 10 ether - amount);
+        assertEq(coin.balanceOf(w1nt3r), 10 ether - amount);
         assertEq(coin.balanceOf(address(bill)), amount);
 
         uint256 id = (uint256(uint160(address(coin))) << 96) | uint256(amount);
-        assertEq(bill.balanceOf(user, id), 1);
+        assertEq(bill.balanceOf(w1nt3r, id), 1);
 
-        vm.prank(user);
-        bill.safeTransferFrom(user, vitalik, id, 1, '');
+        vm.prank(w1nt3r);
+        bill.safeTransferFrom(w1nt3r, vitalik, id, 1, '');
 
         vm.prank(vitalik);
         bill.withdraw(id);
