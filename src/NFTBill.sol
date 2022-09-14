@@ -4,7 +4,7 @@ pragma solidity ^0.8.13;
 import 'openzeppelin-contracts/contracts/token/ERC1155/ERC1155.sol';
 import 'openzeppelin-contracts/contracts/token/ERC20/ERC20.sol';
 import {IMetadata} from './interfaces/IMetadata.sol';
-import './utils/Errors.sol';
+import './lib/Errors.sol';
 
 contract NFTBill is ERC1155 {
     IMetadata public metadata;
