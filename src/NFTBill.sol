@@ -7,7 +7,7 @@ import 'openzeppelin-contracts/contracts/token/ERC20/ERC20.sol';
 import {IMetadata} from './interfaces/IMetadata.sol';
 
 error ValueTooSmall();
-error VallueTooLarge();
+error ValueTooLarge();
 
 contract NFTBill is ERC1155 {
     IMetadata public metadata;
