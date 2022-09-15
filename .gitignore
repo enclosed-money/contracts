@@ -7,3 +7,4 @@ out/
 /broadcast/*
 /broadcast/*/31337/
 node_modules
+.DS_Store
