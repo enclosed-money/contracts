@@ -3,47 +3,36 @@ pragma solidity ^0.8.13;
 
 import "openzeppelin-contracts/contracts/access/Ownable.sol";
 
-/// @title  Registry contract :: Checking if a token's legit
-/// @notice This contract can be called by our main contract for checking if the ERC20 token address is legit
+/// @title  Registry contract :: Checking if a token is verified
+/// @notice This contract can be called by our main contract for checking if the ERC20 token address is verified by the DAO
 
 contract Registry is Ownable {
-    mapping(address => bool) isLegit;
+    mapping(address => bool) public verified;
 
-    event TokenSetTo(address indexed, bool value);
+    event ChangedVerificationStatus(address indexed erc20, bool value);
 
-    /// @notice To be called by the DAO, this switches ERC20 address in the isLegit mapping
+    /// @notice Sets verification status of the ERC20 address in the above mapping 
     /// @param tokenAddress ERC20 token address
-    /// @param _bool The value we want to switch to
+    /// @param _verified The boolean value to switch to
 
-    function setIsLegit(address tokenAddress, bool _bool) public onlyOwner {
-        if (_bool == true) {
-            isLegit[tokenAddress] = true;
-            emit TokenSetTo(tokenAddress, true);
-        } else {
-            delete isLegit[tokenAddress];
-            emit TokenSetTo(tokenAddress, false);
-        }
-    }
-
-    /// @notice Struct for calling setIsLegit in a batched format
-    /// @param n Length of the Array
-    /// @param addressesList List of ERC20token addresses
-    /// @param valuesList Their respective value we want to switch to
-    struct BatchedData {
-        uint8 n;
-        address[] addressesList;
-        bool[] valueList;
-    }
-
-    /// @notice Helps in switching ERC20 Token value in batches
-    /// @param _BatchedData See above struct
-    
-    function setIsLegitBatched(BatchedData memory _BatchedData)
+    function setERC20Status(address tokenAddress, bool _verified)
         public
         onlyOwner
     {
-        for (uint256 i = 0; i < _BatchedData.n; i++) {
-            setIsLegit(_BatchedData.addressesList[i], _BatchedData.valueList[i]);
+        verified[tokenAddress] = _verified;
+        emit ChangedVerificationStatus(tokenAddress, _verified);
+    }
+
+    function setERC20StatusBatched(
+        address[] memory tokenAdrList,
+        bool[] memory values
+    )
+        public
+        onlyOwner
+    {
+        for (uint256 i = 0; i < tokenAdrList.length; i++) {
+            setIsLegit(tokenAdrList[i], values[i]);
         }
     }
 }
+
