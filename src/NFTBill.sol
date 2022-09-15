@@ -25,7 +25,7 @@ contract NFTBill is ERC1155 {
         _mint(msg.sender, value, 1, '');
     }
 
-    function deposit(address erc20, uint96 value) external {
+    function deposit(address erc20, uint96 value) public {
         if (value <= 0) revert ValueTooSmall();
 
         // The caller is expected to have `approve()`d this contract
@@ -59,14 +59,8 @@ contract NFTBill is ERC1155 {
             r,
             s
         );
-        ERC20(erc20).transferFrom(msg.sender, address(this), value);
-        // TODO: What if we get less tokens than we asked for?
-        uint256 id;
-        assembly {
-            id := or(value, shl(96, erc20))
-        }
 
-        _mint(msg.sender, id, 1, '');
+        deposit(erc20, value);
     }
 
     function withdraw(uint256 id) external {
