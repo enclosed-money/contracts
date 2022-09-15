@@ -1,24 +1,24 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
+import 'forge-std/Test.sol';
+import 'openzeppelin-contracts/contracts/proxy/transparent/TransparentUpgradeableProxy.sol';
+
 import 'src/NFTBill.sol';
 import 'src/interfaces/IMetadata.sol';
 import 'src/OffchainMetadata.sol';
-import 'forge-std/Test.sol';
-import 'openzeppelin-contracts/contracts/token/ERC20/ERC20.sol';
-import 'openzeppelin-contracts/contracts/proxy/transparent/TransparentUpgradeableProxy.sol';
-
-contract ShibaCoin is ERC20 {
-    constructor() ERC20('Shiba Inu', 'SHIB') {
-        _mint(0x1E79b045Dc29eAe9fdc69673c9DCd7C53E5E159D, 10 ether);
-    }
-}
+import './utils/mocks/MockERC20.sol';
 
 contract NFTBillTest is Test {
     NFTBill bill;
-    ShibaCoin coin;
+    MockERC20 coin;
     address w1nt3r = 0x1E79b045Dc29eAe9fdc69673c9DCd7C53E5E159D;
     address vitalik = 0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045;
+
+    bytes32 constant PERMIT_TYPEHASH =
+        keccak256(
+            'Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)'
+        );
 
     function setUp() public {
         vm.deal(w1nt3r, 10 ether);
@@ -30,7 +30,8 @@ contract NFTBillTest is Test {
         );
 
         bill = new NFTBill(IMetadata(address(proxy)));
-        coin = new ShibaCoin();
+        coin = new MockERC20();
+        coin.mint(w1nt3r, 10 ether);
     }
 
     function testDepositEther() public {
