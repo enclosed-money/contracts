@@ -110,6 +110,38 @@ contract NFTBillTest is Test {
         assertEq(coin.balanceOf(vitalik), amount);
     }
 
+    function testPermit() public {
+        uint256 privateKey = 0xCAFE;
+        address owner = vm.addr(privateKey);
+
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(
+            privateKey,
+            keccak256(
+                abi.encodePacked(
+                    '\x19\x01',
+                    coin.DOMAIN_SEPARATOR(),
+                    keccak256(
+                        abi.encode(
+                            PERMIT_TYPEHASH,
+                            owner, // owner
+                            address(bill), // spender
+                            1 ether, // value
+                            0,
+                            block.timestamp // deadline
+                        )
+                    )
+                )
+            )
+        );
+
+        coin.mint(owner, 10 ether);
+
+        assertEq(coin.nonces(owner), 0);
+        bill.permit(address(coin), 1 ether, owner, block.timestamp, v, r, s);
+        assertEq(coin.nonces(owner), 1);
+        assertEq(coin.allowance(owner, address(bill)), 1 ether);
+    }
+
     function testUri() public {
         assertEq(bill.uri(1), '');
     }

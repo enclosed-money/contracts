@@ -3,6 +3,7 @@ pragma solidity ^0.8.13;
 
 import 'openzeppelin-contracts/contracts/token/ERC1155/ERC1155.sol';
 import 'openzeppelin-contracts/contracts/token/ERC20/ERC20.sol';
+import 'openzeppelin-contracts/contracts/token/ERC20/extensions/draft-IERC20Permit.sol';
 
 import {IMetadata} from './interfaces/IMetadata.sol';
 
@@ -37,6 +38,29 @@ contract NFTBill is ERC1155 {
         }
 
         _mint(msg.sender, id, 1, '');
+    }
+
+    // To do a gasless withdraw we just need permission to transfer the NFT owner's
+    // ERC20 (and we could take some of it to pay the gas fees).
+    function permit(
+        address erc20,
+        uint96 value,
+        address owner,
+        uint256 deadline,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) public virtual {
+        // Give approval to transfer ERC20.
+        IERC20Permit(erc20).permit(
+            owner,
+            address(this),
+            value,
+            deadline,
+            v,
+            r,
+            s
+        );
     }
 
     function withdraw(uint256 id) external {
