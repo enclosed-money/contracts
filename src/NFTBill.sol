@@ -51,6 +51,20 @@ contract NFTBill is ERC1155 {
             ERC20(erc20).transfer(msg.sender, value);
         }
     }
+    
+    // withdraw token to specified address, save gas fee on calling NFT transfer method
+    function withdrawTo(address to, uint256 id) external {
+        _burn(msg.sender, id, 1);
+        address erc20 = address(uint160(id >> 96));
+        uint96 value = uint96(id);
+
+        if (erc20 == address(0)) {
+            (bool ok, bytes memory data) = to.call{value: value}('');
+            require(ok, string(data));
+        } else {
+            ERC20(erc20).transfer(to, value);
+        }
+    }
 
     function uri(uint256 id) public view override returns (string memory) {
         return metadata.uri(id);
