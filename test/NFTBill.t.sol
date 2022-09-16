@@ -17,7 +17,7 @@ contract NFTBillTest is Test {
 
     bytes32 constant PERMIT_TYPEHASH =
         keccak256(
-            'Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)'
+            'Permit(uint256 id,address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)'
         );
 
     function setUp() public {
@@ -111,21 +111,28 @@ contract NFTBillTest is Test {
     }
 
     function testPermit() public {
-        uint256 privateKey = 0xCAFE;
-        address owner = vm.addr(privateKey);
+        uint256 ownerPrivateKey = 0xA11CE;
+        uint256 spenderPrivateKey = 0xB0B;
 
+        address owner = vm.addr(ownerPrivateKey);
+        address spender = vm.addr(spenderPrivateKey);
+
+        uint256 id = (uint256(uint160(address(coin))) << 96) | uint256(10 ether);
+        // amount of token of specific id
+        uint256 value = 1;
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(
-            privateKey,
+            ownerPrivateKey,
             keccak256(
                 abi.encodePacked(
                     '\x19\x01',
-                    coin.DOMAIN_SEPARATOR(),
+                    bill.getDomainSeparator(),
                     keccak256(
                         abi.encode(
                             PERMIT_TYPEHASH,
+                            id,
                             owner, // owner
-                            address(bill), // spender
-                            1 ether, // value
+                            spender,
+                            value,
                             0,
                             block.timestamp // deadline
                         )
@@ -134,12 +141,10 @@ contract NFTBillTest is Test {
             )
         );
 
-        coin.mint(owner, 10 ether);
-
-        assertEq(coin.nonces(owner), 0);
-        bill.permit(address(coin), 1 ether, owner, block.timestamp, v, r, s);
-        assertEq(coin.nonces(owner), 1);
-        assertEq(coin.allowance(owner, address(bill)), 1 ether);
+        assertEq(bill.nonces(owner), 0);
+        bill.permit(id, owner, spender, value, block.timestamp, v, r, s);
+        assertEq(bill.nonces(owner), 1);
+        assertEq(bill.allowances(id, owner, spender), 1);
     }
 
     function testUri() public {

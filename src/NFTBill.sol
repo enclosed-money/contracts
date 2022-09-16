@@ -3,17 +3,27 @@ pragma solidity ^0.8.13;
 
 import 'openzeppelin-contracts/contracts/token/ERC1155/ERC1155.sol';
 import 'openzeppelin-contracts/contracts/token/ERC20/ERC20.sol';
+import 'openzeppelin-contracts/contracts/utils/cryptography/draft-EIP712.sol';
+import 'openzeppelin-contracts/contracts/utils/cryptography/ECDSA.sol';
 import 'openzeppelin-contracts/contracts/token/ERC20/extensions/draft-IERC20Permit.sol';
 
 import {IMetadata} from './interfaces/IMetadata.sol';
 
 error ValueTooSmall();
 error ValueTooLarge();
+error DeadlineExceeded();
+error SignerNotOwner();
 
-contract NFTBill is ERC1155 {
+contract NFTBill is ERC1155, EIP712 {
+    event Approval(address indexed owner, address indexed spender, uint256 id, uint256 amount);
+
     IMetadata public metadata;
 
-    constructor(IMetadata _metadata) ERC1155('') {
+    // Mapping from tokenID -> owner -> spender -> value
+    mapping (uint256 => mapping(address => mapping(address => uint256))) public allowances;
+    mapping(address => uint256) public nonces;
+
+    constructor(IMetadata _metadata) ERC1155('') EIP712("NFTBill", "1") {
         metadata = _metadata;
     }
 
@@ -40,27 +50,48 @@ contract NFTBill is ERC1155 {
         _mint(msg.sender, id, 1, '');
     }
 
-    // To do a gasless withdraw we just need permission to transfer the NFT owner's
-    // ERC20 (and we could take some of it to pay the gas fees).
+    function getDomainSeparator() external view returns(bytes32) {
+        return _domainSeparatorV4();
+    }
+
     function permit(
-        address erc20,
-        uint96 value,
+        uint256 id,
         address owner,
+        address spender,
+        uint256 value,
         uint256 deadline,
         uint8 v,
         bytes32 r,
         bytes32 s
     ) public virtual {
-        // Give approval to transfer ERC20.
-        IERC20Permit(erc20).permit(
-            owner,
-            address(this),
-            value,
-            deadline,
-            v,
-            r,
-            s
-        );
+        if (deadline > block.timestamp) revert DeadlineExceeded();
+
+        // Unchecked because the only math done is incrementing
+        // the owner's nonce which cannot realistically overflow.
+        unchecked {
+            bytes32 structHash = keccak256(
+                abi.encode(
+                    keccak256(
+                        "Permit(uint256 id,address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)"
+                    ),
+                    id,
+                    owner,
+                    spender,
+                    value,
+                    nonces[owner]++,
+                    deadline
+                )
+            );
+
+            bytes32 hash = _hashTypedDataV4(structHash);
+            address recoveredAddress = ECDSA.recover(hash, v, r, s);
+
+            if (recoveredAddress != owner) revert SignerNotOwner();
+
+            allowances[id][recoveredAddress][spender] = value;
+        }
+
+        emit Approval(owner, spender, id, value);
     }
 
     function withdraw(uint256 id) external {
