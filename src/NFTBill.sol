@@ -48,8 +48,6 @@ contract NFTBill is ERC1155 {
         bytes32 r,
         bytes32 s
     ) external {
-        if (value <= 0) revert ValueTooSmall();
-
         IERC20Permit(erc20).permit(
             msg.sender,
             address(this),
