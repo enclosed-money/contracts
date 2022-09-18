@@ -31,8 +31,9 @@ contract Registry is Ownable {
         onlyOwner
     {
         for (uint256 i = 0; i < tokenAdrList.length; i++) {
-            setIsLegit(tokenAdrList[i], values[i]);
+            setERC20Status(tokenAdrList[i], values[i]);
         }
     }
 }
+
 
