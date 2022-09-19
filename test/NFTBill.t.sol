@@ -1,24 +1,24 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
+import 'forge-std/Test.sol';
+import 'openzeppelin-contracts/contracts/proxy/transparent/TransparentUpgradeableProxy.sol';
+
 import 'src/NFTBill.sol';
 import 'src/interfaces/IMetadata.sol';
 import 'src/OffchainMetadata.sol';
-import 'forge-std/Test.sol';
-import 'openzeppelin-contracts/contracts/token/ERC20/ERC20.sol';
-import 'openzeppelin-contracts/contracts/proxy/transparent/TransparentUpgradeableProxy.sol';
-
-contract ShibaCoin is ERC20 {
-    constructor() ERC20('Shiba Inu', 'SHIB') {
-        _mint(0x1E79b045Dc29eAe9fdc69673c9DCd7C53E5E159D, 10 ether);
-    }
-}
+import './utils/mocks/MockERC20.sol';
 
 contract NFTBillTest is Test {
     NFTBill bill;
-    ShibaCoin coin;
+    MockERC20 coin;
     address w1nt3r = 0x1E79b045Dc29eAe9fdc69673c9DCd7C53E5E159D;
     address vitalik = 0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045;
+
+    bytes32 constant PERMIT_TYPEHASH =
+        keccak256(
+            'Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)'
+        );
 
     function setUp() public {
         vm.deal(w1nt3r, 10 ether);
@@ -30,7 +30,8 @@ contract NFTBillTest is Test {
         );
 
         bill = new NFTBill(IMetadata(address(proxy)));
-        coin = new ShibaCoin();
+        coin = new MockERC20();
+        coin.mint(w1nt3r, 10 ether);
     }
 
     function testDepositEther() public {
@@ -111,5 +112,149 @@ contract NFTBillTest is Test {
 
     function testUri() public {
         assertEq(bill.uri(1), '');
+    }
+
+    function testDepositCoinWithPermit() public {
+        uint256 privateKey = 0xCAFE;
+        address owner = vm.addr(privateKey);
+
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(
+            privateKey,
+            keccak256(
+                abi.encodePacked(
+                    '\x19\x01',
+                    coin.DOMAIN_SEPARATOR(),
+                    keccak256(
+                        abi.encode(
+                            PERMIT_TYPEHASH,
+                            owner, // owner
+                            address(bill), // spender
+                            1 ether, // value
+                            0,
+                            block.timestamp // deadline
+                        )
+                    )
+                )
+            )
+        );
+
+        coin.mint(owner, 10 ether);
+        vm.prank(owner);
+        bill.depositWithPermit(
+            address(coin),
+            1 ether,
+            block.timestamp,
+            v,
+            r,
+            s
+        );
+        assertEq(coin.balanceOf(owner), 9 ether);
+        assertEq(coin.balanceOf(address(bill)), 1 ether);
+
+        // Test withdrawal
+        uint256 id = (uint256(uint160(address(coin))) << 96) | uint256(1 ether);
+        assertEq(bill.balanceOf(owner, id), 1);
+
+        vm.prank(owner);
+        bill.safeTransferFrom(owner, vitalik, id, 1, '');
+
+        vm.prank(vitalik);
+        bill.withdraw(id);
+        assertEq(coin.balanceOf(vitalik), 1 ether);
+    }
+
+    function testFailDepositCoinWithPermitReplayAttack() public {
+        uint256 privateKey = 0xCAFE;
+        address owner = vm.addr(privateKey);
+
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(
+            privateKey,
+            keccak256(
+                abi.encodePacked(
+                    '\x19\x01',
+                    coin.DOMAIN_SEPARATOR(),
+                    keccak256(
+                        abi.encode(
+                            PERMIT_TYPEHASH,
+                            owner, // owner
+                            address(bill), // spender
+                            1 ether, // value
+                            0,
+                            block.timestamp // deadline
+                        )
+                    )
+                )
+            )
+        );
+
+        coin.mint(owner, 10 ether);
+        vm.prank(owner);
+        bill.depositWithPermit(
+            address(coin),
+            1 ether,
+            block.timestamp,
+            v,
+            r,
+            s
+        );
+        bill.depositWithPermit(
+            address(coin),
+            1 ether,
+            block.timestamp,
+            v,
+            r,
+            s
+        );
+    }
+
+    function testDepositCoinWithPermitFuzzing(uint256 amount) public {
+        vm.assume(amount > 0);
+        vm.assume(amount < 10 ether);
+        uint256 privateKey = 0xCAFE;
+        address owner = vm.addr(privateKey);
+
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(
+            privateKey,
+            keccak256(
+                abi.encodePacked(
+                    '\x19\x01',
+                    coin.DOMAIN_SEPARATOR(),
+                    keccak256(
+                        abi.encode(
+                            PERMIT_TYPEHASH,
+                            owner, // owner
+                            address(bill), // spender
+                            amount, // value
+                            0,
+                            block.timestamp // deadline
+                        )
+                    )
+                )
+            )
+        );
+
+        coin.mint(owner, 10 ether);
+
+        vm.prank(owner);
+        bill.depositWithPermit(
+            address(coin),
+            uint96(amount),
+            block.timestamp,
+            v,
+            r,
+            s
+        );
+        assertEq(coin.balanceOf(owner), 10 ether - amount);
+        assertEq(coin.balanceOf(address(bill)), amount);
+
+        uint256 id = (uint256(uint160(address(coin))) << 96) | uint256(amount);
+        assertEq(bill.balanceOf(owner, id), 1);
+
+        vm.prank(owner);
+        bill.safeTransferFrom(owner, vitalik, id, 1, '');
+
+        vm.prank(vitalik);
+        bill.withdraw(id);
+        assertEq(coin.balanceOf(vitalik), amount);
     }
 }
