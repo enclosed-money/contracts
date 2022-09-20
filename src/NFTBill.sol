@@ -13,6 +13,7 @@ error ValueTooSmall();
 error ValueTooLarge();
 error DeadlineExceeded();
 error SignerNotOwner();
+error UnauthorizedWithdraw();
 
 contract NFTBill is ERC1155, EIP712 {
     IMetadata public metadata;
@@ -54,7 +55,6 @@ contract NFTBill is ERC1155, EIP712 {
         uint256 id,
         address owner,
         address spender,
-        uint256 value,
         uint256 deadline,
         uint8 v,
         bytes32 r,
@@ -68,12 +68,11 @@ contract NFTBill is ERC1155, EIP712 {
             bytes32 structHash = keccak256(
                 abi.encode(
                     keccak256(
-                        "Permit(uint256 id,address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)"
+                        "Permit(uint256 id,address owner,address spender,uint256 nonce,uint256 deadline)"
                     ),
                     id,
                     owner,
                     spender,
-                    value,
                     nonces[owner]++,
                     deadline
                 )
@@ -91,15 +90,22 @@ contract NFTBill is ERC1155, EIP712 {
     }
 
     function withdraw(uint256 id) external {
-        _burn(msg.sender, id, 1);
+        withdrawFrom(msg.sender, id);
+    }
+
+    // withdraw token from a specific address. To support gasless withdrawals
+    function withdrawFrom(address owner, uint256 id) public {
+        if (owner != msg.sender && !isApprovedForAll(owner, msg.sender)) revert UnauthorizedWithdraw();
+
+        _burn(owner, id, 1);
         address erc20 = address(uint160(id >> 96));
         uint96 value = uint96(id);
 
         if (erc20 == address(0)) {
-            (bool ok, bytes memory data) = msg.sender.call{value: value}('');
+            (bool ok, bytes memory data) = owner.call{value: value}('');
             require(ok, string(data));
         } else {
-            ERC20(erc20).transfer(msg.sender, value);
+            ERC20(erc20).transfer(owner, value);
         }
     }
 

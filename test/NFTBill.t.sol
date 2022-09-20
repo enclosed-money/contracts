@@ -15,12 +15,21 @@ contract NFTBillTest is Test {
     address w1nt3r = 0x1E79b045Dc29eAe9fdc69673c9DCd7C53E5E159D;
     address vitalik = 0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045;
 
+    uint256 ownerPrivateKey = 0xA11CE;
+    uint256 spenderPrivateKey = 0xB0B;
+
+    address owner;
+    address spender;
+
     bytes32 constant PERMIT_TYPEHASH =
         keccak256(
-            'Permit(uint256 id,address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)'
+            'Permit(uint256 id,address owner,address spender,uint256 nonce,uint256 deadline)'
         );
 
     function setUp() public {
+        owner = vm.addr(ownerPrivateKey);
+        spender = vm.addr(spenderPrivateKey);
+
         vm.deal(w1nt3r, 10 ether);
         OffchainMetadata meta = new OffchainMetadata();
         TransparentUpgradeableProxy proxy = new TransparentUpgradeableProxy(
@@ -111,15 +120,9 @@ contract NFTBillTest is Test {
     }
 
     function testPermit() public {
-        uint256 ownerPrivateKey = 0xA11CE;
-        uint256 spenderPrivateKey = 0xB0B;
-
-        address owner = vm.addr(ownerPrivateKey);
-        address spender = vm.addr(spenderPrivateKey);
 
         uint256 id = (uint256(uint160(address(coin))) << 96) | uint256(10 ether);
-        // amount of token of specific id
-        uint256 value = 1;
+
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(
             ownerPrivateKey,
             keccak256(
@@ -132,7 +135,6 @@ contract NFTBillTest is Test {
                             id,
                             owner, // owner
                             spender,
-                            value,
                             0,
                             block.timestamp // deadline
                         )
@@ -142,9 +144,42 @@ contract NFTBillTest is Test {
         );
 
         assertEq(bill.nonces(owner), 0);
-        bill.permit(id, owner, spender, value, block.timestamp, v, r, s);
+        bill.permit(id, owner, spender, block.timestamp, v, r, s);
         assertEq(bill.nonces(owner), 1);
         assertTrue(bill.isApprovedForAll(owner, spender));
+    }
+
+    function testWithdrawFrom() public {
+        vm.deal(owner, 1 ether);
+        vm.prank(owner);
+        bill.deposit{value: 1 ether}();
+        uint256 id = uint256(1 ether);
+        assertEq(bill.balanceOf(owner, id), 1);
+
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(
+            ownerPrivateKey,
+            keccak256(
+                abi.encodePacked(
+                    '\x19\x01',
+                    bill.getDomainSeparator(),
+                    keccak256(
+                        abi.encode(
+                            PERMIT_TYPEHASH,
+                            id,
+                            owner, // owner
+                            spender,
+                            0,
+                            block.timestamp // deadline
+                        )
+                    )
+                )
+            )
+        );
+        bill.permit(id, owner, spender, block.timestamp, v, r, s);
+
+        vm.prank(spender);
+        bill.withdrawFrom(owner, id);
+        assertEq(owner.balance, 1 ether);
     }
 
     function testUri() public {
