@@ -40,12 +40,17 @@ contract NFTBill is ERC1155 {
     }
 
     function withdraw(uint256 id) external {
-        withdrawTo(msg.sender, id);
+        _withdrawTo(msg.sender, msg.sender, id);
     }
 
     // withdraw token to specified address, save gas fee on calling NFT transfer method
-    function withdrawTo(address to, uint256 id) public {
-        _burn(msg.sender, id, 1);
+    function withdrawTo(address to, uint256 id) external {
+        _withdrawTo(msg.sender, to, id);
+    }
+    
+    // withdrawWithPermit alse can use it
+    function _withdrawTo(address from, address to, uint256 id) internal {
+        _burn(from, id, 1);
         address erc20 = address(uint160(id >> 96));
         uint96 value = uint96(id);
         
