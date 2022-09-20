@@ -112,4 +112,31 @@ contract NFTBillTest is Test {
     function testUri() public {
         assertEq(bill.uri(1), '');
     }
+
+    function testWithdrawTo() public {
+        vm.prank(w1nt3r);
+        bill.deposit{value: 1 ether}();
+        uint256 id = uint256(1 ether);
+        assertEq(bill.balanceOf(w1nt3r, id), 1);
+        vm.prank(w1nt3r);
+        bill.withdrawTo(vitalik, id);
+        assertEq(vitalik.balance, 1 ether);
+    }
+
+    function testWithdrawToCoin() public {
+        vm.prank(w1nt3r);
+        coin.approve(address(bill), 1 ether);
+
+        vm.prank(w1nt3r);
+        bill.deposit(address(coin), 1 ether);
+        assertEq(coin.balanceOf(w1nt3r), 9 ether);
+        assertEq(coin.balanceOf(address(bill)), 1 ether);
+
+        uint256 id = (uint256(uint160(address(coin))) << 96) | uint256(1 ether);
+        assertEq(bill.balanceOf(w1nt3r, id), 1);
+
+        vm.prank(w1nt3r);
+        bill.withdrawTo(vitalik, id);
+        assertEq(coin.balanceOf(vitalik), 1 ether);
+    }
 }
