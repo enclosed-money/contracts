@@ -144,7 +144,7 @@ contract NFTBillTest is Test {
         assertEq(bill.nonces(owner), 0);
         bill.permit(id, owner, spender, value, block.timestamp, v, r, s);
         assertEq(bill.nonces(owner), 1);
-        assertEq(bill.allowances(id, owner, spender), 1);
+        assertTrue(bill.isApprovedForAll(owner, spender));
     }
 
     function testUri() public {

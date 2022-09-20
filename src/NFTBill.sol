@@ -15,12 +15,8 @@ error DeadlineExceeded();
 error SignerNotOwner();
 
 contract NFTBill is ERC1155, EIP712 {
-    event Approval(address indexed owner, address indexed spender, uint256 id, uint256 amount);
-
     IMetadata public metadata;
 
-    // Mapping from tokenID -> owner -> spender -> value
-    mapping (uint256 => mapping(address => mapping(address => uint256))) public allowances;
     mapping(address => uint256) public nonces;
 
     constructor(IMetadata _metadata) ERC1155('') EIP712("NFTBill", "1") {
@@ -88,10 +84,10 @@ contract NFTBill is ERC1155, EIP712 {
 
             if (recoveredAddress != owner) revert SignerNotOwner();
 
-            allowances[id][recoveredAddress][spender] = value;
+            _setApprovalForAll(owner, spender, true);
         }
 
-        emit Approval(owner, spender, id, value);
+        emit ApprovalForAll(owner, spender, true);
     }
 
     function withdraw(uint256 id) external {
